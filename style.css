@@ -708,3 +708,152 @@
       .section-title { font-size: 30px; }
       .scroll-hint { display: none; }
     }
+
+/* ── CP STATS ── */
+.cp-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.cp-card {
+  background: #fff;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: 28px;
+  display: flex; flex-direction: column; gap: 20px;
+  transition: all 0.28s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.cp-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 3px;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.35s ease;
+}
+
+.cp-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(44,31,20,0.1); }
+.cp-card:hover::before { transform: scaleX(1); }
+
+/* per-platform accent colours */
+#cf-card::before { background: linear-gradient(90deg, #1a8cff, #66b3ff); }
+#cc-card::before { background: linear-gradient(90deg, #764abc, #a97de0); }
+#ac-card::before { background: linear-gradient(90deg, #00a63e, #34d068); }
+
+.cp-card-header {
+  display: flex; align-items: center; gap: 14px;
+}
+
+.cp-logo {
+  width: 46px; height: 46px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.cp-logo svg { width: 24px; height: 24px; }
+
+.cf-logo { background: var(--cream2); }
+.cc-logo { background: var(--cream2); }
+.ac-logo { background: var(--cream2); }
+
+.cp-platform-info {
+  display: flex; flex-direction: column; gap: 3px; flex: 1;
+}
+
+.cp-platform-name {
+  font-family: 'Lora', serif;
+  font-size: 17px; font-weight: 600; color: var(--brown);
+}
+
+.cp-handle {
+  font-size: 12px; font-weight: 600; color: var(--muted);
+  transition: color 0.2s;
+}
+.cp-handle:hover { color: var(--accent); }
+
+.cp-status { flex-shrink: 0; }
+.cp-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  display: inline-block;
+}
+.cp-dot.loading {
+  background: var(--border);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+.cp-dot.success { background: #4caf80; }
+.cp-dot.error   { background: #e05c5c; }
+@keyframes pulse {
+  0%,100% { opacity: 1; } 50% { opacity: 0.3; }
+}
+
+.cp-stats-row {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.cp-stat {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 12px 10px;
+  background: var(--cream2);
+  border-radius: 10px; text-align: center;
+  border: 1px solid var(--border);
+}
+
+.cp-stat-value {
+  font-family: 'Lora', serif;
+  font-size: 16px; font-weight: 600; color: var(--brown);
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.cp-stat-label {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.5px;
+  text-transform: uppercase; color: var(--muted);
+  line-height: 1.3;
+}
+
+.cp-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 6px 16px; border-radius: 20px;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.5px;
+  background: var(--cream2); color: var(--muted);
+  border: 1.5px solid var(--border);
+  align-self: flex-start;
+  transition: all 0.3s;
+}
+
+/* Codeforces rank colours */
+.badge-newbie     { background: rgba(128,128,128,0.12); color: #808080; border-color: #808080; }
+.badge-pupil      { background: rgba(0,128,0,0.12);    color: #008000; border-color: #008000; }
+.badge-specialist { background: rgba(0,175,175,0.12);  color: #00afaf; border-color: #00afaf; }
+.badge-expert     { background: rgba(0,0,255,0.12);    color: #0000ff; border-color: #0000ff; }
+.badge-candidate  { background: rgba(170,0,170,0.12);  color: #aa00aa; border-color: #aa00aa; }
+.badge-master     { background: rgba(255,140,0,0.12);  color: #ff8c00; border-color: #ff8c00; }
+.badge-grandmaster{ background: rgba(255,0,0,0.12);    color: #ff0000; border-color: #ff0000; }
+
+/* CodeChef star colours */
+.badge-1star { background: rgba(128,128,128,0.12); color: #808080; border-color: #808080; }
+.badge-2star { background: rgba(0,128,0,0.12);    color: #008000; border-color: #008000; }
+.badge-3star { background: rgba(0,175,175,0.12);  color: #00afaf; border-color: #00afaf; }
+.badge-4star { background: rgba(0,0,255,0.12);    color: #0000ff; border-color: #0000ff; }
+.badge-5star { background: rgba(170,0,170,0.12);  color: #aa00aa; border-color: #aa00aa; }
+.badge-6star { background: rgba(255,140,0,0.12);  color: #ff8c00; border-color: #ff8c00; }
+.badge-7star { background: rgba(255,0,0,0.12);    color: #ff0000; border-color: #ff0000; }
+
+/* AtCoder colours */
+.badge-gray   { background: rgba(128,128,128,0.12); color: #808080; border-color: #808080; }
+.badge-brown  { background: rgba(150,75,0,0.12);   color: #964b00; border-color: #964b00; }
+.badge-green  { background: rgba(0,128,0,0.12);    color: #008000; border-color: #008000; }
+.badge-cyan   { background: rgba(0,175,175,0.12);  color: #00afaf; border-color: #00afaf; }
+.badge-blue   { background: rgba(0,0,255,0.12);    color: #0000ff; border-color: #0000ff; }
+.badge-yellow { background: rgba(200,160,0,0.12);  color: #c8a000; border-color: #c8a000; }
+.badge-orange { background: rgba(255,140,0,0.12);  color: #ff8c00; border-color: #ff8c00; }
+.badge-red    { background: rgba(255,0,0,0.12);    color: #ff0000; border-color: #ff0000; }
+
+@media (max-width: 900px) {
+  .cp-grid { grid-template-columns: 1fr; }
+  .cp-stats-row { grid-template-columns: repeat(2, 1fr); }
+}
