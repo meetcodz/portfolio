@@ -140,11 +140,11 @@ async function loadCF() {
 // -- CODECHEF -- (hardcoded)
 function loadCC() {
   setText("cc-handle", "@" + CC_USERNAME);
-  setText("cc-rating", 1345);
-  setText("cc-max-rating", 1345);
-  setText("cc-stars", "1★");
-  setText("cc-solved", 10);
-  setBadge("cc-badge", "1★", "badge-1star");
+  setText("cc-rating", 1578);
+  setText("cc-max-rating", 1578);
+  setText("cc-stars", "2★");
+  setText("cc-solved", 14);
+  setBadge("cc-badge", "2★", "badge-2star");
   setStatus("cc", "success");
 }
 
@@ -153,7 +153,7 @@ function loadAC() {
   setText("ac-handle", "@" + AC_USERNAME);
   setText("ac-rating", 800);
   setText("ac-max-rating", 800);
-  setBadge("ac-badge", "Brown", "badge-brown");
+  setBadge("ac-badge", "green", "badge-green");
   setStatus("ac", "success");
 }
 
