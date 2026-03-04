@@ -2,7 +2,7 @@
 // This file handles small interactive behaviors on the site.
 // Keeping JS separate makes the project cleaner and easier to maintain.
 
-// Progress bar that fills as the user scrolls
+// Progress bar that fills as the user scroll
 window.addEventListener("scroll", () => {
   const progress = document.getElementById("progress");
   if(!progress) return;
