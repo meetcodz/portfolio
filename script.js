@@ -157,9 +157,163 @@ function loadAC() {
   setStatus("ac", "success");
 }
 
+// -- TYPEWRITER --
+let typewriterDone = false;
+
+function startTypewriter(fullText) {
+  const nameEl = document.querySelector('.hero h1 .name');
+  if (!nameEl) return;
+
+  // reset
+  nameEl.textContent = '';
+  nameEl.style.borderRight = '3px solid var(--accent)';
+  nameEl.style.paddingRight = '4px';
+  nameEl.style.animation = 'blink-cursor 0.75s step-end infinite';
+
+  let i = 0;
+  const interval = setInterval(() => {
+    nameEl.textContent += fullText[i];
+    i++;
+    if (i >= fullText.length) {
+      clearInterval(interval);
+      setTimeout(() => {
+        nameEl.style.transition = 'border-color 0.4s';
+        nameEl.style.borderColor = 'transparent';
+        setTimeout(() => {
+          nameEl.style.borderRight = 'none';
+          nameEl.style.paddingRight = '0';
+          nameEl.style.animation = 'none';
+          nameEl.style.transition = '';
+          typewriterDone = true;
+        }, 400);
+      }, 1500);
+    }
+  }, 80);
+}
+
+// -- PROJECT CARD 3D TILT --
+function initMagneticButtons() {
+  document.querySelectorAll('.btn-primary').forEach(btn => {
+    btn.addEventListener('mousemove', e => {
+      const r   = btn.getBoundingClientRect();
+      const dx  = e.clientX - (r.left + r.width  / 2);
+      const dy  = e.clientY - (r.top  + r.height / 2);
+      btn.style.transform = `translate(${dx * 0.25}px, ${dy * 0.25}px)`;
+    });
+    btn.addEventListener('mouseleave', () => {
+      btn.style.transform = '';
+      btn.style.transition = 'transform 0.4s cubic-bezier(0.23,1,0.32,1), background 0.22s, box-shadow 0.22s';
+    });
+    btn.addEventListener('mouseenter', () => {
+      btn.style.transition = 'transform 0.1s linear, background 0.22s, box-shadow 0.22s';
+    });
+  });
+}
+
+// -- PROJECT CARD 3D TILT --
+function initCardTilt() {
+  document.querySelectorAll('.project-card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const r   = card.getBoundingClientRect();
+      const dx  = (e.clientX - r.left) / r.width  - 0.5;
+      const dy  = (e.clientY - r.top)  / r.height - 0.5;
+      card.style.transform = `perspective(600px) rotateY(${dx * 12}deg) rotateX(${-dy * 12}deg) scale(1.03)`;
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = '';
+      card.style.transition = 'transform 0.5s cubic-bezier(0.23,1,0.32,1), box-shadow 0.28s';
+    });
+    card.addEventListener('mouseenter', () => {
+      card.style.transition = 'transform 0.08s linear, box-shadow 0.28s';
+    });
+  });
+}
+
+// -- CP STATS COUNTER --
+function animateCount(el, target) {
+  if (!el || isNaN(target)) return;
+  const duration = 1200;
+  const start    = performance.now();
+  const from     = 0;
+  const easeOut  = t => 1 - Math.pow(1 - t, 3);
+
+  function tick(now) {
+    const progress = Math.min((now - start) / duration, 1);
+    el.textContent = Math.round(from + (target - from) * easeOut(progress));
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+function initCPCounters() {
+  const cpSection = document.getElementById('cp-stats');
+  if (!cpSection) return;
+
+  const counted = { cf: false, cc: false, ac: false };
+
+  const cpObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+
+      ['cf', 'cc', 'ac'].forEach(platform => {
+        if (counted[platform]) return;
+        const ratingEl = document.getElementById(`${platform}-rating`);
+        const maxEl    = document.getElementById(`${platform}-max-rating`);
+        const solvedEl = document.getElementById(`${platform}-solved`);
+
+        const rating = parseInt(ratingEl?.textContent);
+        const max    = parseInt(maxEl?.textContent);
+        const solved = parseInt(solvedEl?.textContent);
+
+        if (!isNaN(rating) && rating > 0) {
+          animateCount(ratingEl, rating);
+          counted[platform] = true;
+        }
+        if (!isNaN(max)    && max    > 0) animateCount(maxEl,    max);
+        if (!isNaN(solved) && solved > 0) animateCount(solvedEl, solved);
+      });
+    });
+  }, { threshold: 0.3 });
+
+  cpObserver.observe(cpSection);
+}
+
 // Load all on DOM ready
 document.addEventListener("DOMContentLoaded", () => {
   loadCF();
   loadCC();
   loadAC();
+
+  // init all animations
+  initMagneticButtons();
+  initCardTilt();
+
+  // CP counters start after a short delay so API data is loaded
+  setTimeout(initCPCounters, 2000);
+
+  // Typewriter
+  const nameEl = document.querySelector('.hero h1 .name');
+  if (nameEl) {
+    const fullText = nameEl.textContent.trim();
+    nameEl.textContent = '';
+
+    const heroObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          typewriterDone = false;
+          setTimeout(() => startTypewriter(fullText), 400);
+        } else {
+          if (typewriterDone) {
+            nameEl.textContent = '';
+            nameEl.style.borderRight = 'none';
+            nameEl.style.animation = 'none';
+            typewriterDone = false;
+          }
+        }
+      });
+    }, { threshold: 0.5 });
+
+    const heroSection = document.querySelector('.hero');
+    if (heroSection) heroObserver.observe(heroSection);
+  }
 });
