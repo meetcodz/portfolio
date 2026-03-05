@@ -369,9 +369,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function updateFloatNav() {
-    // Show only after hero is scrolled past
+    // Show only after hero is scrolled past (or 200px on mobile)
     const heroBottom = hero ? hero.getBoundingClientRect().bottom : 0;
-    const pastHero = heroBottom < 0;
+    const pastHero = heroBottom < 0 || window.scrollY > 200;
     floatNav.classList.toggle('visible', pastHero);
 
     // Find active section

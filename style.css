@@ -111,6 +111,8 @@
       color: var(--brown);
       position: relative; display: inline-block;
       transition: color 0.25s;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
     .nav-logo:hover { color: var(--accent); }
     .nav-logo::after {
@@ -798,6 +800,7 @@
     }
     @media (max-width: 560px) {
       nav { padding: 0 10px; }
+      .nav-logo { font-size: 20px; }
       nav .nav-links a:not(.nav-cta):not([href^="https"]) { display: none; }
       .hero { padding: 48px 16px 60px; gap: 36px; }
       .hero h1 { font-size: 38px; letter-spacing: -1px; }
@@ -1036,10 +1039,29 @@
 
 
 
-@media (max-width: 640px) {
-  #float-nav { gap: 0; padding: 5px 6px; }
-  #float-nav a { font-size: 11px; padding: 6px 10px; }
+@media (max-width: 780px) {
+  #float-nav {
+    top: auto !important;
+    bottom: 20px !important;
+    transform: translateX(-50%) !important;
+    transition: opacity 0.3s ease !important;
+    gap: 0;
+    padding: 5px 8px;
+    max-width: calc(100vw - 32px);
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  #float-nav::-webkit-scrollbar { display: none; }
+  #float-nav.visible {
+    transform: translateX(-50%) !important;
+  }
+  #float-nav a { font-size: 11px; padding: 6px 11px; }
+  #float-nav a.float-active { color: var(--accent); }
+  #float-nav a.float-active:hover { color: var(--accent); }
   .float-nav-dot { display: none; }
+  #float-nav-glider { display: none; }
 }
 
 /* ── EXPERIENCE TIMELINE ── */
@@ -1251,21 +1273,45 @@
 
 /* ── RESPONSIVE TIMELINE ── */
 @media (max-width: 760px) {
-  .timeline-line { left: 16px; }
-  .timeline-entry {
-    grid-template-columns: 32px 1fr;
-    margin-bottom: 32px;
+  /* Pin BOTH lines to the left — grey base + orange fill */
+  .timeline-line,
+  .timeline-line-fill {
+    left: 20px;
+    transform: none;
   }
-  .timeline-entry { grid-template-columns: 32px 1fr; }
+
+  .timeline-entry {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    grid-template-rows: auto;
+    margin-bottom: 32px;
+    align-items: start;
+  }
+
+  /* Dot goes in the left column, aligned with the line */
+  .timeline-entry.left .timeline-dot,
+  .timeline-entry.right .timeline-dot {
+    grid-column: 1;
+    grid-row: 1;
+    margin: 20px auto 0;
+    position: relative;
+    z-index: 3;
+  }
+
+  /* Card fills the right column — never under the line */
   .timeline-entry.left .timeline-card,
   .timeline-entry.right .timeline-card {
-    grid-column: 2; grid-row: 1;
-    padding-left: 16px; padding-right: 16px;
+    grid-column: 2;
+    grid-row: 1;
+    padding-left: 18px;
+    padding-right: 14px;
   }
-  .timeline-entry.left .timeline-dot,
-  .timeline-entry.right .timeline-dot  { grid-column: 1; grid-row: 1; }
+
+  /* Hide empty placeholder column */
   .timeline-entry.left .timeline-placeholder,
-  .timeline-entry.right .timeline-placeholder { display: none; }
+  .timeline-entry.right .timeline-placeholder {
+    display: none;
+  }
 }
 
 /* Present badge for current roles */
