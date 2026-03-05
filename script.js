@@ -344,35 +344,71 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const hero = document.querySelector('.hero');
   const sections = ['skills','experience','projects','cp-stats','testimony','contact'];
-  const links = floatNav.querySelectorAll('a');
+  const links = Array.from(floatNav.querySelectorAll('a'));
 
-  // Create sliding pill background element
+  // Desktop glider pill
   const glider = document.createElement('span');
   glider.id = 'float-nav-glider';
   floatNav.insertBefore(glider, floatNav.firstChild);
 
+  const isMobile = () => window.innerWidth <= 780;
+
+  // Mobile sliding track
+  let track = null;
+  function setupMobileTrack() {
+    if (!isMobile() || track) return;
+    track = document.createElement('div');
+    track.id = 'float-nav-track';
+    track.style.cssText = `
+      display: flex; align-items: center;
+      transition: transform 0.45s cubic-bezier(0.22,1,0.36,1);
+      white-space: nowrap; will-change: transform;
+    `;
+    links.forEach(a => track.appendChild(a));
+    floatNav.appendChild(track);
+    floatNav.style.overflow = 'hidden';
+
+    // Force each link to exactly 1/3 of nav inner width so nothing peeks
+    const navInnerW = floatNav.clientWidth - 16; // subtract padding
+    const linkW = Math.floor(navInnerW / 3);
+    links.forEach(a => {
+      a.style.width = linkW + 'px';
+      a.style.textAlign = 'center';
+      a.style.boxSizing = 'border-box';
+      a.style.flexShrink = '0';
+    });
+  }
+
+  // Slide track so the active link (by index) is centered in the nav
+  function slideToIndex(activeIdx) {
+    if (!track || !links[0]) return;
+    const VISIBLE = 3;
+    let startIdx = activeIdx - 1;
+    startIdx = Math.max(0, Math.min(startIdx, links.length - VISIBLE));
+    const linkW = links[0].offsetWidth;
+    track.style.transform = `translateX(-${startIdx * linkW}px)`;
+  }
+
   let currentActive = null;
 
   function moveGlider(activeLink) {
-    if (!activeLink) {
-      glider.style.opacity = '0';
-      glider.style.width = '0';
-      return;
-    }
+    if (isMobile()) { glider.style.opacity = '0'; return; }
+    if (!activeLink) { glider.style.opacity = '0'; glider.style.width = '0'; return; }
     const navRect  = floatNav.getBoundingClientRect();
     const linkRect = activeLink.getBoundingClientRect();
-    glider.style.opacity  = '1';
-    glider.style.width    = linkRect.width  + 'px';
-    glider.style.height   = linkRect.height + 'px';
-    glider.style.left     = (linkRect.left - navRect.left) + 'px';
-    glider.style.top      = (linkRect.top  - navRect.top)  + 'px';
+    glider.style.opacity = '1';
+    glider.style.width   = linkRect.width  + 'px';
+    glider.style.height  = linkRect.height + 'px';
+    glider.style.left    = (linkRect.left - navRect.left) + 'px';
+    glider.style.top     = (linkRect.top  - navRect.top)  + 'px';
   }
 
   function updateFloatNav() {
-    // Show only after hero is scrolled past (or 200px on mobile)
     const heroBottom = hero ? hero.getBoundingClientRect().bottom : 0;
     const pastHero = heroBottom < 0 || window.scrollY > 200;
     floatNav.classList.toggle('visible', pastHero);
+
+    if (isMobile()) setupMobileTrack();
 
     // Find active section
     let activeId = null;
@@ -381,6 +417,12 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!el) return;
       if (el.getBoundingClientRect().top <= window.innerHeight * 0.4) activeId = id;
     });
+
+    // Always slide on mobile, even if activeId didn't change
+    if (isMobile() && track) {
+      const activeIdx = activeId ? sections.indexOf(activeId) : 0;
+      slideToIndex(Math.max(0, activeIdx));
+    }
 
     if (activeId === currentActive) return;
     currentActive = activeId;
@@ -395,11 +437,12 @@ document.addEventListener("DOMContentLoaded", () => {
     moveGlider(activeLink);
   }
 
-  // Recalculate on resize too
   window.addEventListener('scroll', updateFloatNav, { passive: true });
   window.addEventListener('resize', () => {
+    if (!isMobile()) track = null;
     const activeLink = floatNav.querySelector('a.float-active');
     moveGlider(activeLink);
+    updateFloatNav();
   });
 
   updateFloatNav();
