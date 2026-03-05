@@ -9,6 +9,14 @@ const prog = document.getElementById('progress');
     navbar.classList.toggle('scrolled', window.scrollY > 10);
   });
 
+  const revealDirs = ['from-bottom','from-left','from-right','from-bl','from-br','from-scale','from-tilt-l','from-tilt-r','from-top'];
+
+  // Assign a random direction to every reveal element before observing
+  document.querySelectorAll('.reveal').forEach(el => {
+    const dir = revealDirs[Math.floor(Math.random() * revealDirs.length)];
+    el.classList.add(dir);
+  });
+
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(e => {
       if (e.isIntersecting) {
@@ -17,8 +25,9 @@ const prog = document.getElementById('progress');
         if (bar) setTimeout(() => { bar.style.width = bar.dataset.width + '%'; }, 200);
       }
     });
-  }, { threshold: 0.12 });
+  }, { threshold: 0.18, rootMargin: '0px 0px -60px 0px' });
   document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -157,39 +166,40 @@ function loadAC() {
   setStatus("ac", "success");
 }
 
-// -- TYPEWRITER --
-let typewriterDone = false;
+// -- TYPEWRITER (hero eyebrow cycling roles) --
+(function () {
+  const el = document.getElementById('hero-typewriter');
+  if (!el) return;
 
-function startTypewriter(fullText) {
-  const nameEl = document.querySelector('.hero h1 .name');
-  if (!nameEl) return;
+  const roles = [
+    'Developer & Creator',
+    'Competitive Programmer',
+    'Database Engineer',
+    'Problem Solver',
+    'Open Source Contributor',
+  ];
 
-  // reset
-  nameEl.textContent = '';
-  nameEl.style.borderRight = '3px solid var(--accent)';
-  nameEl.style.paddingRight = '4px';
-  nameEl.style.animation = 'blink-cursor 0.75s step-end infinite';
+  let roleIdx = 0, charIdx = 0, deleting = false;
+  const TYPING_SPEED = 68, DELETING_SPEED = 38, PAUSE = 1900;
 
-  let i = 0;
-  const interval = setInterval(() => {
-    nameEl.textContent += fullText[i];
-    i++;
-    if (i >= fullText.length) {
-      clearInterval(interval);
-      setTimeout(() => {
-        nameEl.style.transition = 'border-color 0.4s';
-        nameEl.style.borderColor = 'transparent';
-        setTimeout(() => {
-          nameEl.style.borderRight = 'none';
-          nameEl.style.paddingRight = '0';
-          nameEl.style.animation = 'none';
-          nameEl.style.transition = '';
-          typewriterDone = true;
-        }, 400);
-      }, 1500);
+  function tick() {
+    const current = roles[roleIdx];
+    if (!deleting) {
+      el.textContent = current.slice(0, ++charIdx);
+      if (charIdx === current.length) { deleting = true; setTimeout(tick, PAUSE); return; }
+    } else {
+      el.textContent = current.slice(0, --charIdx);
+      if (charIdx === 0) { deleting = false; roleIdx = (roleIdx + 1) % roles.length; }
     }
-  }, 80);
-}
+    setTimeout(tick, deleting ? DELETING_SPEED : TYPING_SPEED);
+  }
+  tick();
+})();
+
+let typewriterDone = false;
+function startTypewriter() {}  // legacy stub — no longer used
+
+
 
 // -- PROJECT CARD 3D TILT --
 function initMagneticButtons() {
@@ -291,29 +301,107 @@ document.addEventListener("DOMContentLoaded", () => {
   // CP counters start after a short delay so API data is loaded
   setTimeout(initCPCounters, 2000);
 
-  // Typewriter
-  const nameEl = document.querySelector('.hero h1 .name');
-  if (nameEl) {
-    const fullText = nameEl.textContent.trim();
-    nameEl.textContent = '';
-
-    const heroObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          typewriterDone = false;
-          setTimeout(() => startTypewriter(fullText), 400);
-        } else {
-          if (typewriterDone) {
-            nameEl.textContent = '';
-            nameEl.style.borderRight = 'none';
-            nameEl.style.animation = 'none';
-            typewriterDone = false;
-          }
-        }
-      });
-    }, { threshold: 0.5 });
-
-    const heroSection = document.querySelector('.hero');
-    if (heroSection) heroObserver.observe(heroSection);
-  }
+  // (typewriter now self-initialises above)
 });
+
+// -- TIMELINE JOURNEY FILL LINE --
+(function () {
+  const fill = document.getElementById('timeline-fill');
+  const timeline = document.querySelector('.timeline');
+  if (!fill || !timeline) return;
+
+  function updateFill() {
+    const tlRect = timeline.getBoundingClientRect();
+    const tlTop = tlRect.top + window.scrollY;
+    const tlHeight = timeline.offsetHeight;
+
+    // Use viewport center as the reading head
+    const viewMid = window.scrollY + window.innerHeight * 0.55;
+    const raw = (viewMid - tlTop) / tlHeight;
+    const progress = Math.max(0, Math.min(1, raw));
+
+    fill.style.height = (progress * 100) + '%';
+
+    // Light up dots that the fill line has passed
+    const dots = timeline.querySelectorAll('.timeline-dot');
+    dots.forEach(dot => {
+      const dotRect = dot.getBoundingClientRect();
+      const dotAbsTop = dotRect.top + window.scrollY - tlTop + dot.offsetHeight / 2;
+      const dotProgress = dotAbsTop / tlHeight;
+      dot.classList.toggle('active', progress >= dotProgress - 0.02);
+    });
+  }
+
+  window.addEventListener('scroll', updateFill, { passive: true });
+  window.addEventListener('resize', updateFill);
+  setTimeout(updateFill, 150);
+})();
+
+
+(function() {
+  const floatNav = document.getElementById('float-nav');
+  if (!floatNav) return;
+
+  const hero = document.querySelector('.hero');
+  const sections = ['skills','experience','projects','cp-stats','testimony','contact'];
+  const links = floatNav.querySelectorAll('a');
+
+  // Create sliding pill background element
+  const glider = document.createElement('span');
+  glider.id = 'float-nav-glider';
+  floatNav.insertBefore(glider, floatNav.firstChild);
+
+  let currentActive = null;
+
+  function moveGlider(activeLink) {
+    if (!activeLink) {
+      glider.style.opacity = '0';
+      glider.style.width = '0';
+      return;
+    }
+    const navRect  = floatNav.getBoundingClientRect();
+    const linkRect = activeLink.getBoundingClientRect();
+    glider.style.opacity  = '1';
+    glider.style.width    = linkRect.width  + 'px';
+    glider.style.height   = linkRect.height + 'px';
+    glider.style.left     = (linkRect.left - navRect.left) + 'px';
+    glider.style.top      = (linkRect.top  - navRect.top)  + 'px';
+  }
+
+  function updateFloatNav() {
+    // Show only after hero is scrolled past
+    const heroBottom = hero ? hero.getBoundingClientRect().bottom : 0;
+    const pastHero = heroBottom < 0;
+    floatNav.classList.toggle('visible', pastHero);
+
+    // Find active section
+    let activeId = null;
+    sections.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (el.getBoundingClientRect().top <= window.innerHeight * 0.4) activeId = id;
+    });
+
+    if (activeId === currentActive) return;
+    currentActive = activeId;
+
+    let activeLink = null;
+    links.forEach(a => {
+      const isActive = a.getAttribute('href').replace('#','') === activeId;
+      a.classList.toggle('float-active', isActive);
+      if (isActive) activeLink = a;
+    });
+
+    moveGlider(activeLink);
+  }
+
+  // Recalculate on resize too
+  window.addEventListener('scroll', updateFloatNav, { passive: true });
+  window.addEventListener('resize', () => {
+    const activeLink = floatNav.querySelector('a.float-active');
+    moveGlider(activeLink);
+  });
+
+  updateFloatNav();
+})();
+
