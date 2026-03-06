@@ -338,6 +338,7 @@ document.addEventListener("DOMContentLoaded", () => {
 })();
 
 
+// -- FLOATING NAV --
 (function() {
   const floatNav = document.getElementById('float-nav');
   if (!floatNav) return;
@@ -355,6 +356,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Mobile sliding track
   let track = null;
+
+  function teardownMobileTrack() {
+    if (!track) return;
+    // Move links back out before removing track
+    links.forEach(a => {
+      a.style.width = '';
+      a.style.textAlign = '';
+      a.style.boxSizing = '';
+      a.style.flexShrink = '';
+      floatNav.appendChild(a);
+    });
+    track.remove();
+    track = null;
+    floatNav.style.overflow = '';
+  }
+
   function setupMobileTrack() {
     if (!isMobile() || track) return;
     track = document.createElement('div');
@@ -369,7 +386,7 @@ document.addEventListener("DOMContentLoaded", () => {
     floatNav.style.overflow = 'hidden';
 
     // Force each link to exactly 1/3 of nav inner width so nothing peeks
-    const navInnerW = floatNav.clientWidth - 16; // subtract padding
+    const navInnerW = floatNav.clientWidth - 16;
     const linkW = Math.floor(navInnerW / 3);
     links.forEach(a => {
       a.style.width = linkW + 'px';
@@ -390,6 +407,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   let currentActive = null;
+  let gliderTimeout = null;
+  let wasVisible = false;
 
   function moveGlider(activeLink) {
     if (isMobile()) { glider.style.opacity = '0'; return; }
@@ -403,9 +422,17 @@ document.addEventListener("DOMContentLoaded", () => {
     glider.style.top     = (linkRect.top  - navRect.top)  + 'px';
   }
 
+  // Delayed glider move — waits for nav slide-in transition (450ms) before measuring
+  function moveGliderWhenReady(activeLink) {
+    if (gliderTimeout) clearTimeout(gliderTimeout);
+    gliderTimeout = setTimeout(() => moveGlider(activeLink), 460);
+  }
+
   function updateFloatNav() {
     const heroBottom = hero ? hero.getBoundingClientRect().bottom : 0;
     const pastHero = heroBottom < 0 || window.scrollY > 200;
+    const becameVisible = pastHero && !wasVisible;
+    wasVisible = pastHero;
     floatNav.classList.toggle('visible', pastHero);
 
     if (isMobile()) setupMobileTrack();
@@ -424,9 +451,7 @@ document.addEventListener("DOMContentLoaded", () => {
       slideToIndex(Math.max(0, activeIdx));
     }
 
-    if (activeId === currentActive) return;
-    currentActive = activeId;
-
+    // Update active link classes regardless of whether activeId changed
     let activeLink = null;
     links.forEach(a => {
       const isActive = a.getAttribute('href').replace('#','') === activeId;
@@ -434,15 +459,27 @@ document.addEventListener("DOMContentLoaded", () => {
       if (isActive) activeLink = a;
     });
 
+    // If nav just became visible, delay glider so slide-in transition finishes first
+    if (becameVisible) {
+      moveGliderWhenReady(activeLink);
+      currentActive = activeId;
+      return;
+    }
+
+    if (activeId === currentActive) return;
+    currentActive = activeId;
     moveGlider(activeLink);
   }
 
   window.addEventListener('scroll', updateFloatNav, { passive: true });
+
   window.addEventListener('resize', () => {
-    if (!isMobile()) track = null;
-    const activeLink = floatNav.querySelector('a.float-active');
-    moveGlider(activeLink);
+    if (!isMobile()) teardownMobileTrack();
     updateFloatNav();
+    // Re-position glider after layout settles
+    requestAnimationFrame(() => {
+      moveGlider(floatNav.querySelector('a.float-active'));
+    });
   });
 
   updateFloatNav();
