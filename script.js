@@ -448,3 +448,127 @@ document.addEventListener("DOMContentLoaded", () => {
   updateFloatNav();
 })();
 
+
+// -- GRAVITY CURSOR TRAIL --
+(function () {
+  // Skip on touch/mobile devices
+  if (window.matchMedia('(hover: none)').matches) return;
+
+  const PARTICLE_COUNT = 28;
+  const GRAVITY = 0.18;
+  const FRICTION = 0.97;
+  const SPAWN_INTERVAL = 38; // ms between particles
+
+  const canvas = document.createElement('canvas');
+  canvas.id = 'cursor-trail-canvas';
+  canvas.style.cssText = `
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+  `;
+  document.body.appendChild(canvas);
+
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  let mouse = { x: -999, y: -999 };
+  let lastSpawn = 0;
+
+  window.addEventListener('mousemove', e => {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+  });
+
+  // Colour palette — warm accent tones matching the site
+  const COLORS = [
+    'rgba(192, 98,  47,',   // accent orange
+    'rgba(210, 130,  60,',  // warm amber
+    'rgba(140,  70,  30,',  // deep brown
+    'rgba(230, 170,  80,',  // golden
+    'rgba(255, 200, 120,',  // soft gold
+  ];
+
+  class Particle {
+    constructor(x, y) {
+      this.x  = x + (Math.random() - 0.5) * 8;
+      this.y  = y + (Math.random() - 0.5) * 8;
+      this.vx = (Math.random() - 0.5) * 2.2;
+      this.vy = (Math.random()) * -2.8 - 0.6; // burst upward
+      this.size   = Math.random() * 4 + 2;
+      this.life   = 1.0;
+      this.decay  = Math.random() * 0.022 + 0.014;
+      this.color  = COLORS[Math.floor(Math.random() * COLORS.length)];
+      this.shape  = Math.random() > 0.5 ? 'circle' : 'star';
+    }
+
+    update() {
+      this.vy  += GRAVITY;       // gravity pulls down
+      this.vx  *= FRICTION;
+      this.vy  *= FRICTION;
+      this.x   += this.vx;
+      this.y   += this.vy;
+      this.life -= this.decay;
+      this.size *= 0.992;
+    }
+
+    draw(ctx) {
+      if (this.life <= 0 || this.size < 0.3) return;
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, this.life);
+      ctx.fillStyle   = `${this.color}${this.life.toFixed(2)})`;
+
+      if (this.shape === 'circle') {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // small diamond/star
+        ctx.translate(this.x, this.y);
+        ctx.rotate(performance.now() * 0.002 + this.vx);
+        ctx.beginPath();
+        const s = this.size;
+        ctx.moveTo(0, -s);
+        ctx.lineTo(s * 0.4, 0);
+        ctx.lineTo(0, s);
+        ctx.lineTo(-s * 0.4, 0);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    isDead() { return this.life <= 0 || this.size < 0.3; }
+  }
+
+  const particles = [];
+
+  function loop(now) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Spawn new particle at cursor
+    if (now - lastSpawn > SPAWN_INTERVAL && mouse.x > 0) {
+      particles.push(new Particle(mouse.x, mouse.y));
+      lastSpawn = now;
+      // Keep pool from growing unbounded
+      if (particles.length > PARTICLE_COUNT) particles.splice(0, 1);
+    }
+
+    // Update + draw
+    for (let i = particles.length - 1; i >= 0; i--) {
+      particles[i].update();
+      particles[i].draw(ctx);
+      if (particles[i].isDead()) particles.splice(i, 1);
+    }
+
+    requestAnimationFrame(loop);
+  }
+
+  requestAnimationFrame(loop);
+})();
